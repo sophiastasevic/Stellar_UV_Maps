@@ -21,10 +21,10 @@ MS lifetime in Myr
 SpType_to_Mass:
 
 Data needed for mass estimates:
-  -Spectroscopic information in at least one band AND:
+    -Spectroscopic information in at least one band AND:
         -Spectral Type OR Effective Temperature OR Spectroscopic information in a different band
-  -Distance to cluster OR individual parallax informaton
-  -At least a median cluster extinction
+    -Distance to cluster OR individual parallax informaton
+    -At least a median cluster extinction
   
 Outputs text file with the following columns: RA, Dec, Effective Temp (log), Mass (M_Sun), Spectral Type
 
