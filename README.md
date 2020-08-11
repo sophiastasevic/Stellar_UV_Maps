@@ -7,12 +7,15 @@ Data needed for calculating FUV/EUV/MS lifetime:
     -'dec'
     -'mass' (M_Sun)
     -'spt' (spectral type)
+
 Text file output from SpType_to_Mass.py will need to be edited so that the first row is: 
 '#ra   dec   teff   mass   spt'
+
 If using SaveOutput(), need to edit output so that the first row is:
 '#ra   dec   FUV   EUV   MS_lifetime'
-    -FUV and EUV in L_Sun
-    -MS lifetime in Myr
+
+FUV and EUV in L_Sun
+MS lifetime in Myr
     
 ---------------------------------------------------------------------------------------------
 SpType_to_Mass:
