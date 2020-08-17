@@ -1,6 +1,7 @@
 # Stellar_UV_Maps
 ---------------------------------------------------------------------------------------------
-OB_plotting:
+ALL FLUX IS SAVED IN UNITS OF LOG(Lo/pc^2) BUT PLOT IN LOG(Go) --> 1 Go = 3.98 Lo/pc^2 IF CONVERTING FLUX TO SAVE IN Go
+OB_plotting: 
 
 Data needed for calculating FUV/EUV/MS lifetime:
 
@@ -37,4 +38,4 @@ closer to 13 Myrs old
 ---------------------------------------------------------------------------------------------
 SpType_logT:
 
-Uses SpT to Teff conversion from Wright et al. 2015 for B5 and earlier, rest from Curriet et al. 2010 
+Uses SpT to Teff conversion from Wright et al. 2015 for B5 and earlier, rest from Currie et al. 2010 
