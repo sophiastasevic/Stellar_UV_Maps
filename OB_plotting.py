@@ -41,15 +41,15 @@ import matplotlib.patheffects as fx
 """
 ============================	GLOBAL VARIABLES	=================================
 """
+name_input='NGC2264' #for ease of plot titles and saving
+cluster = spin.NGC2264()
 
-cluster = spin.hPer()
-
-#disked=np.where(cluster.Disk>0)[0]
-#diskless=np.where(cluster.Disk<0)[0]
-#unknown=np.where(cluster.Disk==0)[0]
+disked=np.where(cluster.Disk>0)[0]
+diskless=np.where(cluster.Disk<0)[0]
+unknown=np.where(cluster.Disk==0)[0]
 
 #file containing at least ra, dec, spectral type, and mass of each massive star
-data=Table.read('hPer_OBA_full_data_UV.txt', format='ascii') 
+data=Table.read('{name}_OBA_full_data_UV.txt'.format(name=name_input), format='ascii') 
 
 letter=np.array(data['spt'])
 number=np.empty(len(data['spt']))
@@ -70,6 +70,7 @@ B_stars_late=np.array(list(set(B_type)&set(late)))
 OB_stars=[*O_stars,*B_stars_early]
 A_stars=np.array(list(set(A_type)))
 
+#chi=np.where(data['ra']>35.25) #ra split between hPer and chiPer
 
 L_Sun = 3.486e26 #(W/m^2)
 parsec = 3.086e+16 #(m)
@@ -88,7 +89,7 @@ def CoordMap():
     #plt.legend(loc='lower right')    
     #plt.xlabel('Right Ascension [deg]')
     #plt.ylabel('Declination [deg]')
-    #plt.title('RA-Dec Map of NGC 2264')
+    #plt.title('RA-Dec Map of {name}'.format(name=name_input))
     
 
 def MS_lifetime(mass_list):
@@ -116,7 +117,7 @@ def EUV_luminosity(mass_list):
     
     length=len(mass_list)
     
-    EUV_lum=np.empty(length) #luminosity FUV-H2
+    EUV_lum=np.empty(length) 
     for i in range(0,length):
         if mass_list[i]>=5 and mass_list[i]<7:
             EUV_lum[i]=(2.32*pow(10,34))*pow(mass_list[i],(11.5))
@@ -190,18 +191,19 @@ def FUV_luminosity(mass_list):
 
 def IncidentFlux():
 
+    #coords of massvie stars
     cluster.ClusterInfo()
-    RA=data['ra']#[OB_stars]
-    DE=data['dec']#[OB_stars]
+    RA=data['ra']#[B_stars_late]
+    DE=data['dec']#[B_stars_late]
     dist=float(cluster.dist)
 
     #cat. used for NGC2362 to convert to degrees
     #cat = ac.SkyCoord(cluster.RA, cluster.Dec, unit="deg")
     
     #coords of low mass stars 
-    RA_ref= cluster.RA #cat.ra.deg*15
-    DE_ref= cluster.Dec #cat.dec.deg
-    radius= Distance(RA_ref, DE_ref, RA, DE, dist) #for flux at the point of low mass stars
+    RA_ref=cluster.RA #cat.ra.deg*15 #
+    DE_ref=cluster.Dec #cat.dec.deg #
+    radius= Distance(RA_ref, DE_ref, RA, DE, dist) #for flux at the point of low mass stars; only needed to calculate flux for the first time
     
     step_RA=(max(RA_ref)-min(RA_ref))/50
     step_DE=(max(DE_ref)-min(DE_ref))/50
@@ -209,25 +211,28 @@ def IncidentFlux():
     DE_bin=np.arange(min(DE_ref),max(DE_ref)+step_DE,step_DE).tolist()
     coord=CoordGrid(RA_bin,DE_bin,RA,DE,dist) #for the UV map
     
-    luminosity=data['FUV']#[OB_stars]
+    #luminosity=data['FUV']#[B_stars_late] #if FUV is already known
     
-    #for calculating FUV/EUV from mass:
-    #mass_list= MassEstimate(data)
-    #luminosity= FUV_luminosity(mass_list)
+    #for calculating flux from mass:
+    mass_list= MassEstimate(data)
+    luminosity= FUV_luminosity(mass_list)
     
+    #for calculating flux of low mass stars 
     flux=np.empty((len(RA_ref),len(RA)))
     for i in range(0,len(RA_ref)):
         for n in range(0,len(RA)):
             flux[i][n]= luminosity[n]/(4*math.pi*pow(radius[i][n],2))
     
+    #coordinate grid for massive star plots
     flux_coord=np.empty((len(RA),len(DE_bin),len(RA_bin)))
     for i in range(0,len(RA)):
         for n in range(0,len(DE_bin)):
             for m in range(0,len(RA_bin)):
                 flux_coord[i][n][m]=luminosity[i]/(4*math.pi*pow(coord[i][n][m]+step_RA/10,2)) #buffer to avoid going to infinity when r=0
 
-    LowMassUV(flux,radius,RA_ref,DE_ref)
-    #UVMap(RA_bin,DE_bin,flux_coord,coord,step_RA,step_DE)
+    #LowMassUV(RA_ref,DE_ref) #if FUV of low mass stars is known
+    #LowMassUV(RA_ref,DE_ref,flux,radius) #if FUV is not known
+    UVMap(RA_bin,DE_bin,flux_coord,coord,step_RA,step_DE)
 
 #calculates seperation for every low mass star from each massive star
 def Distance(RA_ref, DE_ref, RA, DE, dist):
@@ -250,7 +255,7 @@ def Distance(RA_ref, DE_ref, RA, DE, dist):
    
 def MassEstimate(data):
     
-    mass=data['mass']#[OB_stars] 
+    mass=data['mass']#[B_stars_late] 
     return mass
 
 #creates a 2D array of periodic RA and DE seperations from each massive star
@@ -273,8 +278,9 @@ def CoordGrid(RA_bin,DE_bin,RA,DE,dist):
     
 def UVMap(RA_bin,DE_bin,flux_coord,coord,step_RA,step_DE):
     
-    fig, ax=plt.subplots()
-    #ClusterMaps #for overplotting contours on density/ disk fraciton maps
+    #for overplotting, need to comment out lines 297, 303, and 304
+    
+    #ClusterMaps() #for overplotting contours on density/ disk fraciton maps
 
     for i in range(len(RA_bin)): #so that ticks lie in the centre of each data pixel
         RA_bin[i]=RA_bin[i]-(step_RA/2)
@@ -286,19 +292,18 @@ def UVMap(RA_bin,DE_bin,flux_coord,coord,step_RA,step_DE):
     flux_total=flux_coord[0]
     for i in range(1,len(flux_coord)):
         flux_total=flux_total+flux_coord[i]
-    z=np.log10(flux_total)
+    z=np.log10(flux_total/3.98) #converson from Lo/pc^2 to G0
     
-    pc = plt.pcolor(x,y,z,cmap = plt.cm.Spectral_r,norm=mpl.colors.Normalize(vmin=np.log10(1.7*3.98),vmax=5.5)) #1.7 is G0 in solar neighbourhood and 3.98 is the converson from G0 to Lo/pc^2
+    pc= plt.pcolor(x,y,z,cmap = plt.cm.Spectral_r,norm=mpl.colors.Normalize(vmin=np.log10(1.7),vmax=5)) #1.7 is G0 in solar neighbourhood
     
     cmax=np.amax(z)
     print(cmax)
-    levels=np.log10([3.98*50,3.98*100, 3.98*500, 3.98*1000, 3.98*3000, 3.98*30000])
+    levels=np.log10([50,100,500,1000,3000,30000])
     contour = plt.contour(z,levels,origin='lower', linewidths=1.5,colors=['b','lime','yellow','orange','r','purple'],extent=(min(x),max(x)+step_RA,min(y),max(y)+step_DE))
     cb=plt.colorbar(pc, orientation="vertical", pad=0.01,aspect=15)
-    cb.ax.set_ylabel('Log (FUV flux)', rotation=270,linespacing=5,fontsize=10,labelpad=20)
+    cb.ax.set_ylabel('FUV flux [log G$_0$]', rotation=270,linespacing=5,fontsize=10,labelpad=20)
     
-    #plots the radius from the star at which the flux level is --> only possible with single stars
-    #fmtd=DistanceLabels(RA_bin,z,coord,levels)
+    #fmtd=DistanceLabels(RA_bin,z,coord,levels) #plots the radius from the star at which the flux level is --> only possible with single stars
     G_0=[50,100,500,1000,3000,30000]
     fmt={}
     string="G$_{0}$"
@@ -312,34 +317,36 @@ def UVMap(RA_bin,DE_bin,flux_coord,coord,step_RA,step_DE):
     plt.ylabel('Declination [deg]')
     #CoordMap() #plots stars on top of UV map
     plt.axis([max(x),min(x),min(y),max(y)])
-    plt.title('Incident FUV flux map of NGC2264')
-    #plt.savefig('NGC2264_FUV_Map.png')
+    plt.title('Incident FUV flux map of {name}'.format(name=name_input))
+    plt.savefig('{name}_low_mass_FUV_Map_.png'.format(name=name_input))
 
-def LowMassUV(flux,radius,RA_ref,DE_ref):
+def LowMassUV(RA_ref,DE_ref,flux,radius): #(RA_ref,DE_ref) if FUV is known
     
     flux_total=flux[:,0]
     for i in range(len(flux_total)):
         for n in range(len(flux[0])):
             flux_total[i]=flux_total[i]+flux[i][n]
     
-    z=np.log10(flux_total)
+    z=np.log10(flux_total/3.98) #conversion from Lo/pc^2 to Go
+    
+    #z=cluster.OB_FUV-np.log10(3.98) #if FUV is known
     x=RA_ref
     y=DE_ref
     
     final=np.column_stack((x,y,z))
-    np.savetxt('hPer_low_mass_fuv.txt',final, delimiter=" ", fmt="%s")
+    np.savetxt('{name}_low_mass_fuv.txt'.format(name=name_input),final, delimiter=" ", fmt="%s")
     
     def CoordPlot(x,y,z):
-        a=plt.scatter(x,y,c=z,alpha=0.6,cmap = plt.cm.Spectral_r,norm=mpl.colors.Normalize(vmin=np.log10(1.7*3.98),vmax=5.5))
+        a=plt.scatter(x,y,c=z,alpha=0.6,cmap = plt.cm.Spectral_r,norm=mpl.colors.Normalize(vmin=np.log10(1.7),vmax=5))
         cb=plt.colorbar(a, orientation="vertical", pad=0.01,aspect=15)
-        cb.ax.set_ylabel('Log (FUV flux)', rotation=270,linespacing=5,fontsize=10,labelpad=20)
+        cb.ax.set_ylabel('FUV flux [log G$_0$]', rotation=270,linespacing=5,fontsize=10,labelpad=20)
         
         plt.xlabel('Right Ascension [deg]')
         plt.ylabel('Declination [deg]')
         plt.axis([max(x),min(x),min(y),max(y)])
-        plt.title('Incident FUV flux map of on Low Mass Stars')
+        plt.title('Incident FUV flux of {name} on Low Mass Stars'.format(name=name_input))
         
-    #CoordPlot(x,y,z)
+    CoordPlot(x,y,z)
     
 def DistanceLabels(RA_bin,z,coord,levels):
    
@@ -436,7 +443,7 @@ def SaveOutput():
     lt = MS_lifetime(mass_list)
     
     final=np.column_stack((np.array(data['ra']),np.array(data['dec']),FUV,EUV,lt))
-    np.savetxt('hPer_uvs.txt',final, delimiter=" ", fmt="%s")
+    np.savetxt('{name}_uvs.txt'.format(name=name_input),final, delimiter=" ", fmt="%s")
     
 
 """
@@ -445,4 +452,4 @@ def SaveOutput():
 IncidentFlux()   
 #ClusterMaps()
 #CoordMap()
-#SaveOutput()      
+SaveOutput()      
