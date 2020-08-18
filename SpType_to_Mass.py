@@ -93,7 +93,7 @@ def MagConversion(stars):
   
     return M
 
-def MagTeffInterpol(AbsMag,iso,teff):
+def MagTeffInterpol(AbsMag,teff,iso):
     
     #column in isochrone corresponding to the band the absolute magnitude was calculated for
     upperVmag=np.where(iso[:,14]>-4.4)[0] #want the point where the isochrone curves back on itself
