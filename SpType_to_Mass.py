@@ -18,7 +18,7 @@ import math
 def OBASort():
     
     stars=Table.read('NGC2362_McSwain_Unique_2MASS.txt', format='ascii') #table containing star data
-    stype=Table.read('SpType_logT.txt', format='ascii') #table of conversions between spectral type and teff
+    stype=np.loadtxt('SpType_logT.txt',dtype=str) #table of conversions between spectral type and teff
     iso=np.loadtxt('MIST_iso_5_Myrs.cmd') #MIST iscochroen for cluster age containing relevant spectroscopic band information
     
     #if Teff is known but not SpT:
