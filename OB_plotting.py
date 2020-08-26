@@ -333,7 +333,7 @@ def LowMassUV(RA_ref,DE_ref,flux,radius): #(RA_ref,DE_ref) if FUV is known
     x=RA_ref
     y=DE_ref
     
-    final=np.column_stack((x,y,z))
+    final=np.column_stack((x,y,np.log10(flux_total)))
     np.savetxt('{name}_low_mass_fuv.txt'.format(name=name_input),final, delimiter=" ", fmt="%s")
     
     def CoordPlot(x,y,z):
