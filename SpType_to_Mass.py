@@ -86,7 +86,7 @@ def MagConversion(stars):
     
     #BP_RP=stars['BP-RP'] #if BP-RP is known but only median A is known --> only for calculating G band extinction
     #AG=makeAvGaia(BP_RP,med_Av)   
-    Aj=0.807*Av
+    Aj=0.285*Av
     
     M=np.array(mj-5*np.log10(cluster.dist/10)-Aj)
     #M=np.array(mj-5*np.log10(100/stars['Plx'])-Aj) #if parallax for individual stars is known
