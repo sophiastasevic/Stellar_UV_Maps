@@ -164,9 +164,10 @@ def IncidentFlux():
     x=data['x_pc']
     y=data['y_pc']    
 
-    #coords of low mass stars 
-    x_ref=cluster['x_pc']
-    y_ref=cluster['y_pc']
+    #range of coordinate grid, set to cluster['x_pc'] and cluster['y_pc'] to 
+    #calculate full FUV in range of low mass stars only
+    x_ref= [-10,10] #cluster['x_pc']
+    y_ref= [-10,10] #cluster['y_pc']
         
     step_x=(max(x_ref)-min(x_ref))/100
     step_y=(max(y_ref)-min(y_ref))/100
@@ -191,17 +192,22 @@ def IncidentFlux():
     contour_z=UVMap(x_bin,y_bin,flux_coord,coord,step_x,step_y)
     
     if Calc_incident_FUV == True:
-        radius= Distance(x_ref, y_ref, x, y)
-        flux=np.empty((len(x_ref),len(x)))
-        for i in range(0,len(x_ref)):
+        radius= Distance(x, y)
+        flux=np.empty((len(cluster['x_pc']),len(x)))
+        for i in range(0,len(cluster['x_pc'])):
             for n in range(0,len(x)):
                 flux[i][n]= luminosity[n]/(4*math.pi*pow(radius[i][n],2))
-        LowMassUV2(x_ref,y_ref,flux,radius,contour_z)
+        #x_ref and y_ref need to be passed along so they can be used for the
+        #extent of the contours
+        LowMassUV2(flux,radius,contour_z,x_ref,y_ref)
     else:
-        LowMassUV(x_ref,y_ref,contour_z)
+        LowMassUV(contour_z,x_ref,y_ref)
 
 #calculates seperation for every low mass star from each massive star
-def Distance(x_ref, y_ref, x, y):
+def Distance(x, y):
+    
+    x_ref=cluster['x_pc']
+    y_ref=cluster['y_pc']
     
     radius=np.empty((len(x_ref),len(x)))
     x_dif=np.empty((len(x_ref),len(x)))
@@ -275,15 +281,15 @@ def UVMap(x_bin,y_bin,flux_coord,coord,step_x,step_y):
     
     return z
 
-def LowMassUV(x_ref,y_ref,contour_z):
+def LowMassUV(contour_z,x_ref,y_ref):
     
     z=cluster['F_FUV_2d']
-    x=x_ref
-    y=y_ref
+    x=cluster['x_pc']
+    y=cluster['y_pc']
     
-    LowMassPlot(x,y,z,contour_z)
+    LowMassPlot(x,y,z,contour_z,x_ref,y_ref)
     
-def LowMassUV2(x_ref,y_ref,flux,radius,contour_z):
+def LowMassUV2(flux,radius,contour_z,x_ref,y_ref):
     
     flux_total=flux[:,0]
     for i in range(len(flux_total)):
@@ -292,22 +298,22 @@ def LowMassUV2(x_ref,y_ref,flux,radius,contour_z):
     
     z=np.log10(flux_total/3.98) #conversion from Lo/pc^2 to Go
     
-    x=x_ref
-    y=y_ref
+    x=cluster['x_pc']
+    y=cluster['y_pc']
     
     final=np.column_stack((x,y,np.log10(flux_total)))
     np.savetxt('{name}_low_mass_fuv.txt'.format(name=name_input),final, delimiter=" ", fmt="%s")
     
-    LowMassPlot(x,y,z,contour_z)
+    LowMassPlot(x,y,z,contour_z),x_ref,y_ref
     
-def LowMassPlot(x,y,z,contour_z):
+def LowMassPlot(x,y,z,contour_z,x_ref,y_ref):
     
     a=plt.scatter(x,y,c=z,alpha=0.6,cmap = plt.cm.Spectral_r,norm=mpl.colors.Normalize(vmin=np.log10(1.7),vmax=5))
     cb=plt.colorbar(a, orientation="vertical", pad=0.01,aspect=15)
     cb.ax.set_ylabel('FUV flux [log G$_0$]', rotation=270,linespacing=5,fontsize=10,labelpad=20)
      
     levels=np.log10([50,100,500,1000,3000,30000])
-    contour = plt.contour(contour_z,levels,origin='lower', linewidths=1.5,colors=['b','lime','yellow','orange','r','purple'],extent=(min(x),max(x),min(y),max(y)))
+    contour = plt.contour(contour_z,levels,origin='lower', linewidths=1.5,colors=['b','lime','yellow','orange','r','purple'],extent=(min(x_ref),max(x_ref),min(y_ref),max(y_ref)))
     
     #fmtd=DistanceLabels(x_bin,z,coord,levels) #plots the radius from the star at which the flux level is --> only possible with single stars
     G_0=[50,100,500,1000,3000,30000]
